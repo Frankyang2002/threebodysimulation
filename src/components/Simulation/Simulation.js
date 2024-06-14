@@ -1,219 +1,208 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import * as THREE from 'three';
 import Grid from './Grid';
 import Body from './Body';
 import Arrow from './Arrow';
+import SimulationControls from './SimulationControls';
+import { computeAcceleration, combineCollidingBodies } from '../../utils/physics'; // Import other physics utility functions as needed
 
 const initialBodies = [
-  { position: [1, 2], prevPosition: [1, 1.99], velocity: [0, -0.2], mass: 40},
-  { position: [5, 2], prevPosition: [5, 2.01], velocity: [0, -0.2], mass: 80},
-  { position: [-4, -2], prevPosition: [-4, -2.01], velocity: [2, 0], mass: 40 },
-]
-  
-// Simulation Logic
+  { id: 1, position: [3, 3], velocity: [0, 0], mass: 40, radius: 1 },
+  { id: 2, position: [-3, 3], velocity: [0, 0], mass: 80, radius: 1 },
+  { id: 3, position: [0, -3], velocity: [0, 0], mass: 40, radius: 1 },
+];
+
 const Simulation = () => {
-  // Initialisation
-  const [bodies, setBodies] = useState(initialBodies)
+  const [bodies, setBodies] = useState([]);
   const [showGrid, setShowGrid] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedBody, setSelectedBody] = useState(null);
-  const [mousePosition, setMousePosition] = useState([0, 0]);
+  const [combineOnCollision, setCombineOnCollision] = useState(false); // Switch state for collision behavior
+  const raycaster = useRef(new THREE.Raycaster());
+  const mouse = useRef(new THREE.Vector2());
+  const cameraRef = useRef();
+  const bodiesRefs = useRef(new Map());
 
-  const computeAcceleration = (body, bodies) => {
-    const G = 1; // Gravitational constant
-    let ax = 0, ay = 0;
-
-    bodies.forEach(otherBody => {
-      if (body !== otherBody) {
-        const dx = otherBody.position[0] - body.position[0];
-        const dy = otherBody.position[1] - body.position[1];
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const force = (G * body.mass * otherBody.mass) / (distance * distance);
-        ax += force * dx / distance / body.mass;
-        ay += force * dy / distance / body.mass;
+  // Initialize bodies and refs
+  useEffect(() => {
+    setBodies(initialBodies.map(body => ({ ...body }))); // Clone initial bodies
+    initialBodies.forEach(body => {
+      if (!bodiesRefs.current.has(body.id)) {
+        bodiesRefs.current.set(body.id, React.createRef());
       }
     });
+  }, []);
 
-    return [ax, ay];
-  };
+  // Restart simulation
+  const handleRestart = useCallback(() => {
+    setBodies(initialBodies.map(body => ({ ...body }))); // Reset bodies to initial state
+    setIsRunning(false);
+    setSelectedBody(null);
+  }, []);
 
-  const detectAndHandleCollisions = (bodies) => {
-    const collisionDistance = 0.2; // Distance at which we consider two bodies to have collided
-    let newBodies = [...bodies];
-    const combinedIndices = new Set(); // To keep track of already combined bodies
-  
-    for (let i = 0; i < bodies.length; i++) {
-      if (combinedIndices.has(i)) continue;
-  
-      for (let j = i + 1; j < bodies.length; j++) {
-        if (combinedIndices.has(j)) continue;
-  
-        const dx = bodies[i].position[0] - bodies[j].position[0];
-        const dy = bodies[i].position[1] - bodies[j].position[1];
-        const distance = Math.sqrt(dx * dx + dy * dy);
-  
-        if (distance < collisionDistance) {
-          // Calculate total mass
-          const totalMass = bodies[i].mass + bodies[j].mass;
-  
-          // Calculate new position as the center of mass
-          const newPosition = [
-            (bodies[i].position[0] * bodies[i].mass + bodies[j].position[0] * bodies[j].mass) / totalMass,
-            (bodies[i].position[1] * bodies[i].mass + bodies[j].position[1] * bodies[j].mass) / totalMass,
-          ];
-  
-          // Calculate new velocity to conserve momentum
-          const newVelocity = [
-            (bodies[i].velocity[0] * bodies[i].mass + bodies[j].velocity[0] * bodies[j].mass) / totalMass,
-            (bodies[i].velocity[1] * bodies[i].mass + bodies[j].velocity[1] * bodies[j].mass) / totalMass,
-          ];
-  
-          // Create new combined body
-          const newBody = {
-            position: newPosition,
-            prevPosition: newPosition, // Initial prev position same as position
-            velocity: newVelocity,
-            mass: totalMass,
-          };
-  
-          // Mark the original bodies as combined
-          combinedIndices.add(i);
-          combinedIndices.add(j);
-  
-          // Add the new combined body
-          newBodies.push(newBody);
-        }
-      }
-    }
-  
-    // Filter out the original bodies that have been combined
-    newBodies = newBodies.filter((_, index) => !combinedIndices.has(index));
-  
-    return newBodies;
-  };
+  useEffect(() => {
+    handleRestart(); // Call restart when component mounts
+  }, [handleRestart]);
 
-
-  // Using verlet integration method, apparently much better and more stable
-  // it avoids velocity computation and uses approximations so its not so accurate, will change if important
-  // Need to test time steps as it is very sensitive to it
+  // Update bodies based on physics
   const updateBodies = useCallback(() => {
     const dt = 0.01; // Time step
 
-    let newBodies = bodies.map(body => {
-      const [ax, ay] = computeAcceleration(body, bodies);
+    setBodies(prevBodies => {
+      let newBodies = prevBodies.map(body => {
+        const [ax, ay] = computeAcceleration(body, prevBodies);
 
-      // New position using Verlet integration
-      const newPosition = [
-        2 * body.position[0] - body.prevPosition[0] + ax * dt * dt,
-        2 * body.position[1] - body.prevPosition[1] + ay * dt * dt,
-      ];
+        const newPosition = [
+          body.position[0] + body.velocity[0] * dt + 0.5 * ax * dt * dt,
+          body.position[1] + body.velocity[1] * dt + 0.5 * ay * dt * dt,
+        ];
 
-      return {
-        ...body,
-        prevPosition: body.position, // Update previous position
-        position: newPosition,       // Update current position
-        velocity: [
-          (newPosition[0] - body.prevPosition[0]) / (2 * dt),
-          (newPosition[1] - body.prevPosition[1]) / (2 * dt),
-        ],
-      };
+        return {
+          ...body,
+          position: newPosition,
+          velocity: [
+            body.velocity[0] + ax * dt,
+            body.velocity[1] + ay * dt,
+          ],
+        };
+      });
+
+      if (combineOnCollision) {
+        newBodies = combineCollidingBodies(newBodies); // Combine colliding bodies and conserve momentum
+      } else {
+        // Handle other collision logic here if needed
+      }
+
+      return newBodies;
     });
+  }, [combineOnCollision]);
 
-    newBodies = detectAndHandleCollisions(newBodies);
-
-    setBodies(newBodies);
-  }, [bodies]);
-
+  // Start or stop simulation based on isRunning state
   useEffect(() => {
-  if (isRunning) {
-    const interval = setInterval(updateBodies, 16); // Update at approximately 60fps
-    return () => clearInterval(interval);
-  }
+    if (isRunning) {
+      const interval = setInterval(updateBodies, 16); // Update at approximately 60fps
+      return () => clearInterval(interval);
+    }
   }, [isRunning, updateBodies]);
 
-
-  const handleRestart = () => {
-    setBodies([...initialBodies]);
-    setIsRunning(false);
-  };
-
+  // Handle mouse interaction for selecting and moving bodies
   const handleMouseDown = (event) => {
-    const { offsetX, offsetY } = event.nativeEvent;
-    const x = (offsetX / event.target.clientWidth) * 2 - 1;
-    const y = -(offsetY / event.target.clientHeight) * 2 + 1;
-    setMousePosition([x, y]);
+    if (isRunning) return; // Prevent interaction while simulation is running
 
-    const selected = bodies.findIndex((body) => {
-      if (!body.position) return false; // Guard clause
-      const dx = body.position[0] - x * 10;
-      const dy = body.position[1] - y * 10;
-      return Math.sqrt(dx * dx + dy * dy) < 0.2;
-    });
+    event.preventDefault();
 
-    if (selected !== -1) {
+    const rect = event.target.getBoundingClientRect();
+    mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.current.setFromCamera(mouse.current, cameraRef.current);
+
+    const intersects = raycaster.current.intersectObjects(
+      Array.from(bodiesRefs.current.values()).map(ref => ref.current)
+    );
+
+    if (intersects.length > 0) {
+      const selected = Array.from(bodiesRefs.current.keys()).find(
+        key => bodiesRefs.current.get(key).current === intersects[0].object
+      );
       setSelectedBody(selected);
     }
   };
 
   const handleMouseMove = (event) => {
-    if (selectedBody !== null) {
-      const { offsetX, offsetY } = event.nativeEvent;
-      const x = (offsetX / event.target.clientWidth) * 2 - 1;
-      const y = -(offsetY / event.target.clientHeight) * 2 + 1;
-      setMousePosition([x, y]);
+    if (isRunning || selectedBody === null) return; // Prevent interaction while simulation is running or no body is selected
 
-      const newBodies = bodies.map((body, index) => {
-        if (index === selectedBody) {
-          return {
-            ...body,
-            position: [x * 10, y * 10],
-          };
-        }
-        return body;
-      });
-      setBodies(newBodies);
-    }
+    event.preventDefault();
+
+    const rect = event.target.getBoundingClientRect();
+    mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    const newPosition = new THREE.Vector3(mouse.current.x, mouse.current.y, 0.5);
+    newPosition.unproject(cameraRef.current);
+
+    const dir = newPosition.sub(cameraRef.current.position).normalize();
+    const distance = -cameraRef.current.position.z / dir.z;
+    const pos = cameraRef.current.position.clone().add(dir.multiplyScalar(distance));
+
+    setBodies(prevBodies => {
+      const newBodies = [...prevBodies];
+      const bodyIndex = newBodies.findIndex(body => body.id === selectedBody);
+      const body = newBodies[bodyIndex];
+
+      // Update the position
+      newBodies[bodyIndex] = {
+        ...body,
+        position: [pos.x, pos.y]
+      };
+      return newBodies;
+    });
   };
 
   const handleMouseUp = () => {
     setSelectedBody(null);
   };
 
-  // Canvas come from react-three-fibre and now we have 3D rendering context
-  // Get illumination and we render the body into scene
+  const handleUpdateVelocity = useCallback((bodyId, velocityDelta) => {
+    setBodies(prevBodies => {
+      const newBodies = [...prevBodies];
+      const bodyIndex = newBodies.findIndex(body => body.id === bodyId);
+      const body = newBodies[bodyIndex];
+
+      // Update velocity based on the arrow drag
+      newBodies[bodyIndex] = {
+        ...body,
+        velocity: [
+          body.velocity[0] + velocityDelta[0],
+          body.velocity[1] + velocityDelta[1],
+        ],
+      };
+      return newBodies;
+    });
+  }, []);
+
   return (
     <div>
-      <button onClick={() => setIsRunning(!isRunning)}>
-        {isRunning ? 'Stop' : 'Start'}
-      </button>
-      <button onClick={handleRestart}>
-        Restart
-      </button>
-      <button onClick={() => setShowGrid(!showGrid)}>
-        {showGrid ? 'Hide Grid' : 'Show Grid'}
-      </button>
+      <SimulationControls
+        isRunning={isRunning}
+        setIsRunning={setIsRunning}
+        handleRestart={handleRestart}
+        showGrid={showGrid}
+        setShowGrid={setShowGrid}
+        combineOnCollision={combineOnCollision}
+        setCombineOnCollision={setCombineOnCollision} // Pass setCombineOnCollision to the controls
+      />
       <div
         style={{ width: '800px', height: '600px', position: 'relative' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        <Canvas>
+        <Canvas
+          camera={{ position: [0, 0, 10], near: 0.1, far: 1000 }}
+          onCreated={({ camera }) => (cameraRef.current = camera)}
+        >
           {showGrid && <Grid />}
-          {bodies.map((body, index) => (
-            <Body key={index} body={body} isSelected={index === selectedBody} />
+          {bodies.map(body => (
+            <Body
+              key={body.id}
+              body={body}
+              isSelected={body.id === selectedBody}
+              ref={bodiesRefs.current.get(body.id)}
+            />
           ))}
-          {bodies.map((body, index) => (
+          {bodies.map(body => (
             <Arrow
-              key={`arrow-${index}`}
+              key={`arrow-${body.id}`}
               from={body.position}
               to={[
                 body.position[0] + body.velocity[0],
                 body.position[1] + body.velocity[1],
               ]}
-              headLength={0.5} // Adjust these values to make the arrow heads larger
-              headWidth={0.3}
+              velocity={body.velocity}
+              onUpdateVelocity={handleUpdateVelocity.bind(null, body.id)}
             />
           ))}
           <ambientLight intensity={0.5} />
@@ -222,10 +211,11 @@ const Simulation = () => {
             enableZoom={true}
             enablePan={true}
             enableRotate={true}
-            zoomSpeed={0.6} // Control the speed of zooming
-            minDistance={1} // Minimum distance camera can zoom out
-            maxDistance={200} // Maximum distance camera can zoom in
-            target={[0, 0, 0]} // Ensure the camera is centered on the scene
+            zoomSpeed={0.6}
+            minDistance={10}
+            maxDistance={50}
+            target={[0, 0, 0]}
+            enabled={selectedBody === null} // Disable controls when a mass is selected
           />
         </Canvas>
       </div>
