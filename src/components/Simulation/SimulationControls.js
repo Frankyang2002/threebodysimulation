@@ -6,13 +6,7 @@ const SimulationControls = ({
   handleRestart,
   showGrid,
   setShowGrid,
-  combineOnCollision,
-  setCombineOnCollision,
 }) => {
-  const handleToggleCollision = () => {
-    setCombineOnCollision(prev => !prev); // Toggle between true and false
-  };
-
   return (
     <div style={{ marginBottom: '20px' }}>
       <button onClick={() => setIsRunning(prev => !prev)}>
@@ -22,14 +16,6 @@ const SimulationControls = ({
       <button onClick={() => setShowGrid(prev => !prev)}>
         {showGrid ? 'Hide Grid' : 'Show Grid'}
       </button>
-      <label style={{ marginLeft: '10px' }}>
-        <input
-          type="checkbox"
-          checked={combineOnCollision}
-          onChange={handleToggleCollision}
-        />
-        Combine Collisions
-      </label>
     </div>
   );
 };
