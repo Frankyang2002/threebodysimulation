@@ -1,5 +1,6 @@
 import React from 'react';
 
+// The row of controls and buttons
 const SimulationControls = ({
   isRunning,
   setIsRunning,

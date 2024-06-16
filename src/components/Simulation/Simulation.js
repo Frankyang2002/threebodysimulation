@@ -8,10 +8,11 @@ import SimulationControls from './SimulationControls';
 import useBodies from './useBodies';
 import useMouseInteractions from './useMouseInteractions';
 
+// Default bodies
 const initialBodies = [
-  { id: 1, position: [3, 3], velocity: [0, 0], mass: 40, radius: 1 },
-  { id: 2, position: [-3, 3], velocity: [0, 0], mass: 80, radius: 1 },
-  { id: 3, position: [0, -3], velocity: [0, 0], mass: 40, radius: 1 },
+  { id: 1, position: [3, 3], velocity: [0, 0], mass: 40, radius: 0.2 },
+  { id: 2, position: [-3, 3], velocity: [0, 0], mass: 80, radius: 0.2 },
+  { id: 3, position: [0, -3], velocity: [0, 0], mass: 40, radius: 0.2 },
 ];
 
 const Simulation = () => {
