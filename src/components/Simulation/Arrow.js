@@ -2,9 +2,12 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
+// Props: start and end position of arrow, and  also the size of the arrow
 const Arrow = ({ from, to, headLength = 0.3, headWidth = 0.2 }) => {
+  // References the arrowhelper object created
   const arrowRef = useRef();
 
+  // update arrow direction, length, position each frame
   useFrame(() => {
     const dir = new THREE.Vector3(to[0] - from[0], to[1] - from[1], 0).normalize();
     const length = Math.sqrt(Math.pow(to[0] - from[0], 2) + Math.pow(to[1] - from[1], 2));

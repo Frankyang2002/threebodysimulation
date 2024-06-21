@@ -19,7 +19,10 @@ const Simulation = () => {
   const [showGrid, setShowGrid] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedBody, setSelectedBody] = useState(null);
-  const { bodies, setBodies, bodiesRefs, resetBodies } = useBodies(initialBodies, isRunning);
+  const [hoveredBody, setHoveredBody] = useState(null); // New state for hovered body
+  const [timeScale, setTimeScale] = useState(1);
+  const [frameRateMultiplier, setFrameRateMultiplier] = useState(1);
+  const { bodies, setBodies, bodiesRefs, resetBodies } = useBodies(initialBodies, isRunning, timeScale, frameRateMultiplier);
   const cameraRef = useRef();
 
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useMouseInteractions(
@@ -36,6 +39,13 @@ const Simulation = () => {
     setIsRunning(false);
     setSelectedBody(null);
   }, [resetBodies]);
+
+  const handleSpeedUp = () => setTimeScale(prev => prev * 2); // Speed up
+  const handleSlowDown = () => setTimeScale(prev => prev / 2); // Slow down
+  const handleReverse = () => setTimeScale(prev => -prev); // Reverse time
+
+  const handleIncreaseFrameRate = () => setFrameRateMultiplier(prev => prev * 2); // Double the frame rate
+  const handleDecreaseFrameRate = () => setFrameRateMultiplier(prev => prev / 2); // Halve the frame rate
 
   const handleUpdateVelocity = useCallback((bodyId, velocityDelta) => {
     setBodies(prevBodies => {
@@ -55,14 +65,7 @@ const Simulation = () => {
   }, [setBodies]);
 
   return (
-    <div>
-      <SimulationControls
-        isRunning={isRunning}
-        setIsRunning={setIsRunning}
-        handleRestart={handleRestart}
-        showGrid={showGrid}
-        setShowGrid={setShowGrid}
-      />
+    <div style={{ display: 'flex', flexDirection: 'row' }}>
       <div
         style={{ width: '800px', height: '600px', position: 'relative' }}
         onMouseDown={handleMouseDown}
@@ -79,6 +82,7 @@ const Simulation = () => {
               key={body.id}
               body={body}
               isSelected={body.id === selectedBody}
+              isHovered={body.id === hoveredBody} // Pass hovered state
               ref={bodiesRefs.current.get(body.id)}
             />
           ))}
@@ -108,6 +112,24 @@ const Simulation = () => {
           />
         </Canvas>
       </div>
+      <SimulationControls
+        isRunning={isRunning}
+        setIsRunning={setIsRunning}
+        handleRestart={handleRestart}
+        showGrid={showGrid}
+        setShowGrid={setShowGrid}
+        handleSpeedUp={handleSpeedUp}
+        handleSlowDown={handleSlowDown}
+        handleReverse={handleReverse}
+        handleIncreaseFrameRate={handleIncreaseFrameRate}
+        handleDecreaseFrameRate={handleDecreaseFrameRate}
+        frameRateMultiplier={frameRateMultiplier} 
+        timeScale={timeScale}
+        bodies={bodies} // Pass bodies state to SimulationControls
+        setBodies={setBodies} // Pass setBodies function to SimulationControls
+        setHoveredBody={setHoveredBody} // Assuming you want to pass setSelectedBody for hover effect
+        bodiesRef={setHoveredBody}
+      />
     </div>
   );
 };
