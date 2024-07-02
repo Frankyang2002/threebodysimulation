@@ -5,7 +5,7 @@ import React, { forwardRef } from 'react';
 const Body = forwardRef(({ body, isSelected, isHovered }, ref) => (
   <mesh ref={ref} position={[body.position[0], body.position[1], body.position[2]]}>
     <sphereGeometry args={[body.radius, 32, 32, 32]} />
-    <meshStandardMaterial color={isSelected ? 'red' : isHovered ? 'yellow' : 'blue'} />
+    <meshStandardMaterial color={isSelected ? '#FA9898' : isHovered ? '#FACF76' : body.color} />
   </mesh>
 ));
 

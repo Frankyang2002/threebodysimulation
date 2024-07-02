@@ -1,12 +1,17 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // Props: start and end position of arrow, and  also the size of the arrow
-const Arrow = ({ from, to, headLength = 0.3, headWidth = 0.2 }) => {
+const Arrow = ({ from, to, color = 'yellow', headLength = 0.3, headWidth = 0.2 }) => {
   // References the arrowhelper object created
   const arrowRef = useRef();
 
+  useEffect(() => {
+    if (arrowRef.current) {
+      arrowRef.current.setColor(new THREE.Color(color));
+    }
+  }, [color]); 
   // update arrow direction, length, position each frame
   useFrame(() => {
     const dir = new THREE.Vector3(to[0] - from[0], to[1] - from[1], to[2] - from[2]).normalize();
@@ -18,7 +23,7 @@ const Arrow = ({ from, to, headLength = 0.3, headWidth = 0.2 }) => {
     }
   });
 
-  return <primitive object={new THREE.ArrowHelper()} ref={arrowRef} args={[new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0),  1, 0xffff00, headLength, headWidth]} />;
+  return <primitive object={new THREE.ArrowHelper()} ref={arrowRef} args={[new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0),  5, new THREE.Color(color), headLength, headWidth]} />;
 };
 
 export default Arrow;

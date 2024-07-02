@@ -1,10 +1,19 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect  } from 'react';
 import * as THREE from 'three';
 
 // Raycasting allows us to detect intersections between objects
 const useMouseInteractions = (bodiesRefs, setSelectedBody, setBodies, isRunning, cameraRef, selectedBody) => {
   const raycaster = useRef(new THREE.Raycaster());
   const mouse = useRef(new THREE.Vector2());
+
+  useEffect(() => {
+    // Ensure bodiesRefs includes all current body references
+    Object.values(bodiesRefs.current).forEach(ref => {
+      if (!ref.current) {
+        ref.current = new THREE.Object3D();
+      }
+    });
+  }, [bodiesRefs]);
 
   const handleMouseDown = useCallback((event) => {
     // Moving masses only works when paused
@@ -27,8 +36,7 @@ const useMouseInteractions = (bodiesRefs, setSelectedBody, setBodies, isRunning,
 
     // Now we select the selected bdoy
     if (intersects.length > 0) {
-      const selected = Array.from(bodiesRefs.current.keys()).find(
-        key => bodiesRefs.current.get(key).current === intersects[0].object
+      const selected = Array.from(bodiesRefs.current.keys()).find(key => bodiesRefs.current.get(key).current === intersects[0].object
       );
       setSelectedBody(selected);
     }

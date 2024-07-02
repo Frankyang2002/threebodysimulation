@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect} from 'react';
+import { SketchPicker } from 'react-color';
 
 const SimulationControls = ({
   isRunning,
@@ -14,9 +15,45 @@ const SimulationControls = ({
   setBodies,
   setHoveredBody,
   setTime,
-  bodiesRef
+  bodiesRef,
+  showVelocityArrows,
+  setShowVelocityArrows,
+  showAccelerationArrows,
+  setShowAccelerationArrows
 }) => {
+
   const [hoveredMass, setHoveredMass] = useState(null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [selectedMass, setSelectedMass] = useState(null);
+  const colorPickerRef = useRef(null); // Reference to color picker element
+
+ // Update the bodiesRef when bodies change
+  useEffect(() => {
+  bodies.forEach((body) => {
+      if (!bodiesRef.current.has(body.id)) {
+        bodiesRef.current.set(body.id, React.createRef());
+      }
+    });
+  }, [bodies, bodiesRef]);
+
+  useEffect(() => {
+    // Function to close color picker when clicking outside of it
+    const handleClickOutside = (event) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
+        setShowColorPicker(false);
+        setSelectedMass(null);
+      }
+    };
+
+    // Attach event listener
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Cleanup function to remove event listener
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleChangeTime = (newTime) => {
     setTime(newTime)
   };
@@ -135,17 +172,35 @@ const SimulationControls = ({
 
 
   const handleAddMass = () => {
+    console.log(bodies)
+    console.log(bodies.length)
     const newId = bodies.length + 1; // Generate new ID
     const newMass = {
       id: newId,
       position: [0, 0, 0],
       velocity: [0, 0, 0],
-      mass: 0,
-      radius: 0.2, // Initial radius, adjust as needed
+      mass: 10,
+      radius: 0.2, 
+      color: '#7FFFF4' 
     };
     setBodies(prevBodies => [...prevBodies, newMass]);
   };
 
+
+
+  const handleColorChange = (color) => {
+    if (selectedMass !== null) {
+      setBodies(prevBodies => {
+        const newBodies = prevBodies.map(body => {
+          if (body.id === selectedMass) {
+            return { ...body, color: color.hex };
+          }
+          return body;
+        });
+        return newBodies;
+      });
+    }
+  };
   
   return (
     <div style={{ marginLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -177,6 +232,27 @@ const SimulationControls = ({
         />
         <button onClick={handleSpeedUp}>&gt;</button>
       </div>
+      <div>
+        <label>
+          <input
+            type="checkbox"
+            checked={showVelocityArrows}
+            onChange={(e) => setShowVelocityArrows(e.target.checked)}
+          />
+          Show Velocity Arrows
+        </label>
+      </div>
+      <div>
+        <label>
+          <input
+            type="checkbox"
+            checked={showAccelerationArrows}
+            onChange={(e) => setShowAccelerationArrows(e.target.checked)}
+          />
+          Show Acceleration Arrows
+        </label>
+      </div>
+      
       <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
         <h3>Masses</h3>
         <ul style={{ listStyleType: 'none', padding: 0 }}>
@@ -199,7 +275,8 @@ const SimulationControls = ({
                 padding: '10px',
                 backgroundColor: hoveredMass === body.id ? '#ddd' : 'white',
                 transition: 'background-color 0.3s ease',
-                color: 'black'
+                color: 'black',
+                position: 'relative', 
               }}
             >
               <div>
@@ -265,6 +342,38 @@ const SimulationControls = ({
                   onChange={e => handleChangeVelocityZ(body.id, e.target.value)}
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
+              </div>
+              <div>
+                <div
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    backgroundColor: body.color,
+                    border: '1px solid black',
+                    cursor: 'pointer',
+                    position: 'absolute',
+                    top: '13px',
+                    left: '10px', // Adjust position as needed
+                  }}
+                  onClick={() => {
+                    setShowColorPicker(true);
+                    setSelectedMass(body.id);
+                  }}
+                />
+                {showColorPicker && selectedMass === body.id && (
+                  <div
+                    ref={colorPickerRef}
+                    style={{
+                      position: 'absolute',
+                      zIndex: 10
+                    }}
+                  >
+                    <SketchPicker
+                      color={body.color}
+                      onChangeComplete={color => handleColorChange(color)}
+                    />
+                  </div>
+                )}
               </div>
             </li>
           ))}

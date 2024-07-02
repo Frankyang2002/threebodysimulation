@@ -53,6 +53,14 @@ const useBodies = (initialBodies, isRunning, timeScale, frameRateMultiplier) => 
     // Resets bodies to the initial bodies
     const resetBodies = () => {
         setBodies(initialBodies.map(body => ({ ...body })));
+
+        bodiesRefs.current.clear()
+        initialBodies.forEach(body => {
+          if (!bodiesRefs.current.has(body.id)) {
+              bodiesRefs.current.set(body.id, React.createRef());
+          }
+        });
+
     };
 
     return { bodies, setBodies, bodiesRefs, resetBodies };

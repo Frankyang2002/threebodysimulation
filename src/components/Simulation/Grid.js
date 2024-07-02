@@ -10,12 +10,10 @@ const createGrid = (size, divisions, showGrid) => {
   const step = size / divisions;
   const vertices = [];
 
-  console.log(showGrid)
   if (showGrid === 3 || showGrid === 2) {
     for (let i = 0; i <= divisions; i++) {
       const position = -halfSize + i * step;
 
-      
       // XY plane lines
       vertices.push(-halfSize, position, 0, halfSize, position, 0); // horizontal lines
       vertices.push(position, -halfSize, 0, position, halfSize, 0); // vertical lines
@@ -29,7 +27,6 @@ const createGrid = (size, divisions, showGrid) => {
         vertices.push(0, -halfSize, position, 0, halfSize, position); // horizontal lines
         vertices.push(0, position, -halfSize, 0, position, halfSize); // vertical lines
       }
-
     }
   }
 
