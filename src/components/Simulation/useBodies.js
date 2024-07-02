@@ -9,9 +9,9 @@ const useBodies = (initialBodies, isRunning, timeScale, frameRateMultiplier) => 
     useEffect(() => {
         setBodies(initialBodies.map(body => ({ ...body }))); // Clone initial bodies
         initialBodies.forEach(body => {
-        if (!bodiesRefs.current.has(body.id)) {
-            bodiesRefs.current.set(body.id, React.createRef());
-        }
+          if (!bodiesRefs.current.has(body.id)) {
+              bodiesRefs.current.set(body.id, React.createRef());
+          }
         });
     }, [initialBodies]);
 
@@ -21,18 +21,20 @@ const useBodies = (initialBodies, isRunning, timeScale, frameRateMultiplier) => 
         const dt = 0.01 * (Math.abs(timeScale/frameRateMultiplier)); // Adjust dt by time scale
         setBodies(prevBodies => {
           let newBodies = prevBodies.map(body => {
-            const [ax, ay] = computeAcceleration(body, prevBodies);
+            const [ax, ay, az] = computeAcceleration(body, prevBodies);
             // s = ut + 1/2 at^2
             const newPosition = [
-              body.position[0] + body.velocity[0] * dt + 0.5 * ax * dt * dt * Math.sign(timeScale),
-              body.position[1] + body.velocity[1] * dt + 0.5 * ay * dt * dt * Math.sign(timeScale),
+              body.position[0] + body.velocity[0] * dt + 0.5 * ax * dt * dt,
+              body.position[1] + body.velocity[1] * dt + 0.5 * ay * dt * dt,
+              body.position[2] + body.velocity[2] * dt + 0.5 * az * dt * dt,
             ];
             return {
               ...body,
               position: newPosition,
               velocity: [
-                body.velocity[0] + ax * dt * Math.sign(timeScale),
-                body.velocity[1] + ay * dt * Math.sign(timeScale),
+                body.velocity[0] + ax * dt,
+                body.velocity[1] + ay * dt,
+                body.velocity[2] + az * dt,
               ],
             };
           });

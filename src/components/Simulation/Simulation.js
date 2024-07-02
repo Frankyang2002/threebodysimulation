@@ -10,16 +10,16 @@ import useMouseInteractions from './useMouseInteractions';
 
 // Default bodies
 const initialBodies = [
-  { id: 1, position: [3, 3], velocity: [0, 0], mass: 40, radius: 0.2 },
-  { id: 2, position: [-3, 3], velocity: [0, 0], mass: 80, radius: 0.2 },
-  { id: 3, position: [0, -3], velocity: [0, 0], mass: 40, radius: 0.2 },
+  { id: 1, position: [3, 3, 0], velocity: [0, 0, 0], mass: 40, radius: 0.2 },
+  { id: 2, position: [-3, 3, 0], velocity: [0, 0, 0], mass: 80, radius: 0.2 },
+  { id: 3, position: [0, -3, 0], velocity: [0, 0, 0], mass: 40, radius: 0.2 },
 ];
 
 const Simulation = () => {
-  const [showGrid, setShowGrid] = useState(true);
+  const [showGrid, setShowGrid] = useState(3);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedBody, setSelectedBody] = useState(null);
-  const [hoveredBody, setHoveredBody] = useState(null); // New state for hovered body
+  const [hoveredBody, setHoveredBody] = useState(null);
   const [timeScale, setTimeScale] = useState(1);
   const [frameRateMultiplier, setFrameRateMultiplier] = useState(1);
   const { bodies, setBodies, bodiesRefs, resetBodies } = useBodies(initialBodies, isRunning, timeScale, frameRateMultiplier);
@@ -36,6 +36,7 @@ const Simulation = () => {
 
   const handleRestart = useCallback(() => {
     resetBodies();
+    setTimeScale(1)
     setIsRunning(false);
     setSelectedBody(null);
   }, [resetBodies]);
@@ -52,12 +53,13 @@ const Simulation = () => {
       const newBodies = [...prevBodies];
       const bodyIndex = newBodies.findIndex(body => body.id === bodyId);
       const body = newBodies[bodyIndex];
-
+      
       newBodies[bodyIndex] = {
         ...body,
         velocity: [
           body.velocity[0] + velocityDelta[0],
           body.velocity[1] + velocityDelta[1],
+          body.velocity[2] + velocityDelta[2]
         ],
       };
       return newBodies;
@@ -76,7 +78,7 @@ const Simulation = () => {
           camera={{ position: [0, 0, 10], near: 0.1, far: 1000 }}
           onCreated={({ camera }) => (cameraRef.current = camera)}
         >
-          {showGrid && <Grid />}
+          {showGrid && <Grid showGrid={showGrid} />}
           {bodies.map(body => (
             <Body
               key={body.id}
@@ -93,6 +95,7 @@ const Simulation = () => {
               to={[
                 body.position[0] + body.velocity[0],
                 body.position[1] + body.velocity[1],
+                body.position[2] + body.velocity[2],
               ]}
               velocity={body.velocity}
               onUpdateVelocity={handleUpdateVelocity.bind(null, body.id)}
@@ -105,8 +108,8 @@ const Simulation = () => {
             enablePan={true}
             enableRotate={true}
             zoomSpeed={0.6}
-            minDistance={10}
-            maxDistance={50}
+            minDistance={5}
+            maxDistance={100}
             target={[0, 0, 0]}
             enabled={selectedBody === null}
           />
@@ -125,10 +128,11 @@ const Simulation = () => {
         handleDecreaseFrameRate={handleDecreaseFrameRate}
         frameRateMultiplier={frameRateMultiplier} 
         timeScale={timeScale}
-        bodies={bodies} // Pass bodies state to SimulationControls
-        setBodies={setBodies} // Pass setBodies function to SimulationControls
-        setHoveredBody={setHoveredBody} // Assuming you want to pass setSelectedBody for hover effect
+        bodies={bodies} 
+        setBodies={setBodies} 
+        setHoveredBody={setHoveredBody} 
         bodiesRef={setHoveredBody}
+        setTime={setTimeScale}
       />
     </div>
   );

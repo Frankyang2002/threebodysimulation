@@ -63,7 +63,7 @@ const useMouseInteractions = (bodiesRefs, setSelectedBody, setBodies, isRunning,
 
       newBodies[bodyIndex] = {
         ...body,
-        position: [pos.x, pos.y]
+        position: [pos.x, pos.y, body.position[2]]
       };
       return newBodies;
     });

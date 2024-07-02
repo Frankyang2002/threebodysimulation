@@ -7,21 +7,24 @@ export function computeAcceleration(body, bodies) {
 
   let ax = 0;
   let ay = 0;
-
+  let az = 0;
+  
   bodies.forEach(otherBody => {
     if (body.id !== otherBody.id) {
       const dx = otherBody.position[0] - body.position[0];
       const dy = otherBody.position[1] - body.position[1];
+      const dz = otherBody.position[2] - body.position[2];
       // pythagoras
-      const distanceSquared = dx * dx + dy * dy + softening;
+      const distanceSquared = dx * dx + dy * dy + dz * dz +  softening;
       // a = G M / r^2
       const accel = (G * otherBody.mass) / distanceSquared;
       // ax = a * cos theta, ay = a * sin theta
       ax += accel * dx / Math.sqrt(distanceSquared);
       ay += accel * dy / Math.sqrt(distanceSquared);
+      az += accel * dz / Math.sqrt(distanceSquared);
     }
   });
 
-  return [ax, ay];
+  return [ax, ay, az];
 }
 
