@@ -16,7 +16,7 @@ const AccelerationArrow = ({ from, to, color = 'red', headLength = 0.3, headWidt
     const dir = new THREE.Vector3(to[0] - from[0], to[1] - from[1], to[2] - from[2]).normalize();
     let distance = Math.sqrt(Math.pow(to[0] - from[0], 2) + Math.pow(to[1] - from[1], 2) + Math.pow(to[2] - from[2], 2));
     // Apply a diminishing function to the distance so it doesnt go to infinity
-    const length = Math.log(distance + 1) + 0.1; // Adjust the parameters as necessary
+    const length = Math.log(distance + 1) + 0.1; 
 
     if (arrowRef.current) {
       arrowRef.current.setDirection(dir);

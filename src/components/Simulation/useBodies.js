@@ -1,9 +1,11 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { computeAcceleration} from '../../utils/physics';
+import { resolveCollisions} from '../../utils/collisions';
 
 const useBodies = (initialBodies, isRunning, timeScale, frameRateMultiplier) => {
     const [bodies, setBodies] = useState([]);
     const bodiesRefs = useRef(new Map());
+    const trailsRefs = useRef(new Map()); 
 
     // Initialise bodies and puts references on them
     useEffect(() => {
@@ -15,13 +17,16 @@ const useBodies = (initialBodies, isRunning, timeScale, frameRateMultiplier) => 
         if (!bodiesRefs.current.has(body.id)) {
             bodiesRefs.current.set(body.id, React.createRef());
         }
+        if (!trailsRefs.current.has(body.id)) {
+          trailsRefs.current.set(body.id, React.createRef());
+        }
       });
     }, [initialBodies]);
 
     
     // Calculate new position and velocity for all bodies with dt, works with computeAcceleration to get accel of each body
     const updateBodies = useCallback(() => {
-        const dt = 0.001 * (Math.abs(timeScale/frameRateMultiplier)); // Adjust dt by time scale
+        const dt = 0.002 * (Math.abs(timeScale/frameRateMultiplier)); // Adjust dt by time scale
 
         setBodies(prevBodies => {
           let newBodies = prevBodies.map(body => {
@@ -47,7 +52,7 @@ const useBodies = (initialBodies, isRunning, timeScale, frameRateMultiplier) => 
               position: newPosition,
             };
           });
-    
+          resolveCollisions(newBodies);
           return newBodies;
         });
       }, [timeScale, frameRateMultiplier]);
@@ -65,16 +70,27 @@ const useBodies = (initialBodies, isRunning, timeScale, frameRateMultiplier) => 
         ...body,
       })));
 
+      trailsRefs.current.forEach(trailRef => {
+        if (trailRef.current && trailRef.current.clearTrail) {
+          trailRef.current.clearTrail();
+        }
+      });
+
       bodiesRefs.current.clear()
+      trailsRefs.current.clear();
+
       initialBodies.forEach(body => {
         if (!bodiesRefs.current.has(body.id)) {
             bodiesRefs.current.set(body.id, React.createRef());
+        }
+        if (!trailsRefs.current.has(body.id)) {
+          trailsRefs.current.set(body.id, React.createRef());
         }
       });
 
     };
 
-    return { bodies, setBodies, bodiesRefs, resetBodies };
+    return { bodies, setBodies, bodiesRefs, resetBodies, trailsRefs  };
 };
 
 export default useBodies;

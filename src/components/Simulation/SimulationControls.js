@@ -71,10 +71,11 @@ const SimulationControls = ({
     };
   }, []);
 
+  /*
   const handleChangeTime = (newTime) => {
     setTime(newTime)
   };
-
+  */ 
   const toggleGrid = () => {
     setShowGrid(1);
 
@@ -89,7 +90,7 @@ const SimulationControls = ({
 
   };
 
-
+  // Function for editing the values in the input sections
   const commitEdit = () => {
     if (editValue.id !== null && editValue.property !== null) {
       setBodies(prevBodies => {
@@ -198,7 +199,9 @@ const SimulationControls = ({
           style={{ marginLeft: '5px', width: '50px', textAlign: 'left' }}
         />
       </div>
+      {/*
       <div>
+        
         <span>Speed:</span>
         <button onClick={handleSlowDown}>&lt;</button>
         <input
@@ -209,6 +212,7 @@ const SimulationControls = ({
         />
         <button onClick={handleSpeedUp}>&gt;</button>
       </div>
+      */}
       <div>
         <label>
           <input

@@ -1,9 +1,10 @@
 import React, { forwardRef } from 'react';
 import { Text } from '@react-three/drei';
-
+import Trail from './Trail';
 // Spherical body in 3D using three.js (Currenrtly only doing 2d now)
 // forwardRef allows parent components to interact with Three.js mesh directly
-const Body = forwardRef(({ body, isSelected, isHovered, showName }, ref) => (
+const Body = forwardRef(({ body, isSelected, isHovered, showName, trailRef  }, ref) => (
+  <>
   <mesh ref={ref} position={[body.position[0], body.position[1], body.position[2]]}>
     <sphereGeometry args={[body.radius, 32, 32, 32]} />
     <meshStandardMaterial color={isSelected ? '#FA9898' : isHovered ? '#FACF76' : body.color} />
@@ -26,6 +27,9 @@ const Body = forwardRef(({ body, isSelected, isHovered, showName }, ref) => (
       </Text>
     )}
   </mesh>
+  <Trail body={body} ref={trailRef} maxLength={0} trailWidth={1} />
+  </>
+  
 ));
 
 export default Body;

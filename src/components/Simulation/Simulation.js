@@ -23,7 +23,7 @@ const Simulation = () => {
   const [hoveredBody, setHoveredBody] = useState(null);
   const [timeScale, setTimeScale] = useState(1);
   const [frameRateMultiplier, setFrameRateMultiplier] = useState(1);
-  const { bodies, setBodies, bodiesRefs, resetBodies } = useBodies(initialBodies, isRunning, timeScale, frameRateMultiplier);
+  const { bodies, setBodies, bodiesRefs, resetBodies, trailsRefs  } = useBodies(initialBodies, isRunning, timeScale, frameRateMultiplier);
   const cameraRef = useRef();
   const [showVelocityArrows, setShowVelocityArrows] = useState(true);
   const [showAccelerationArrows, setShowAccelerationArrows] = useState(true);
@@ -45,7 +45,13 @@ const Simulation = () => {
     setTimeScale(1)
     setIsRunning(false);
     setSelectedBody(null);
-  }, [resetBodies]);
+
+    Object.values(bodiesRefs.current).forEach(bodyRef => {
+      if (bodyRef.current && bodyRef.current.clearTrail) {
+        bodyRef.current.clearTrail(); // Call clearTrail function directly
+      }
+    });
+  }, [resetBodies, bodiesRefs]);
 
   const handleSpeedUp = () => setTimeScale(prev => prev * 2); // Speed up
   const handleSlowDown = () => setTimeScale(prev => prev / 2); // Slow down
@@ -88,43 +94,46 @@ const Simulation = () => {
         >
           {showGrid && <Grid showGrid={showGrid} gridSize={gridSize} gridSpacing={gridSpacing}/>}
           {bodies.map(body => (
-            <Body
-              key={body.id}
-              body={body}
-              isSelected={body.id === selectedBody}
-              isHovered={body.id === hoveredBody} // Pass hovered state
-              ref={bodiesRefs.current.get(body.id)}
-              showName = {showNames}
-            />
-          ))}
-          {bodies.map(body => (
             <React.Fragment key={body.id}>
-              {showVelocityArrows && (<Arrow
-                key={`arrow-${body.id}`}
-                from={body.position}
-                to={[
-                  body.position[0] + body.velocity[0],
-                  body.position[1] + body.velocity[1],
-                  body.position[2] + body.velocity[2],
-                ]}
-                velocity={body.velocity}
-                onUpdateVelocity={handleUpdateVelocity.bind(null, body.id)}
-              />)}
+
+              <Body
+                key={body.id}
+                body={body}
+                isSelected={body.id === selectedBody}
+                isHovered={body.id === hoveredBody} 
+                ref={bodiesRefs.current.get(body.id)}
+                showName = {showNames}
+                trailRef={trailsRefs.current.get(body.id)}
+              />
+              <React.Fragment key={body.id}>
+                {/*<Trail body={body} maxLength={5000} trailWidth={5} />*/}
+              </React.Fragment>
+              <React.Fragment key={body.id}>
+                {showVelocityArrows && (<Arrow
+                  key={`arrow-${body.id}`}
+                  from={body.position}
+                  to={[
+                    body.position[0] + body.velocity[0],
+                    body.position[1] + body.velocity[1],
+                    body.position[2] + body.velocity[2],
+                  ]}
+                  velocity={body.velocity}
+                  onUpdateVelocity={handleUpdateVelocity.bind(null, body.id)}
+                />)}
+                
+              </React.Fragment>
+              <React.Fragment key={body.id}>
+                {showAccelerationArrows && <AccelerationArrow
+                  key={`accelarrow-${body.id}`}
+                  from={body.position}
+                  to={[
+                    body.position[0] + computeAcceleration(body, bodies)[0],
+                    body.position[1] + computeAcceleration(body, bodies)[1],
+                    body.position[2] + computeAcceleration(body, bodies)[2],
+                  ]}
+                />}
+              </React.Fragment>
             </React.Fragment>
-          ))}
-          {bodies.map(body => (
-            <React.Fragment key={body.id}>
-              {showAccelerationArrows && <AccelerationArrow
-                key={`accelarrow-${body.id}`}
-                from={body.position}
-                to={[
-                  body.position[0] + computeAcceleration(body, bodies)[0],
-                  body.position[1] + computeAcceleration(body, bodies)[1],
-                  body.position[2] + computeAcceleration(body, bodies)[2],
-                ]}
-              />}
-            </React.Fragment>
-            
           ))}
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
