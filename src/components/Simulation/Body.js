@@ -27,7 +27,7 @@ const Body = forwardRef(({ body, isSelected, isHovered, showName, trailRef  }, r
       </Text>
     )}
   </mesh>
-  <Trail body={body} ref={trailRef} maxLength={0} trailWidth={1} />
+  {/*<Trail body={body} ref={trailRef} maxLength={0} trailWidth={0} />*/}
   </>
   
 ));
