@@ -1,3 +1,6 @@
+# Github Pages Link
+https://frankyang2002.github.io/threebodysimulation/
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
