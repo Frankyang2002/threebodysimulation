@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/threebodysimulation/static/css/main.bb64b08c.css",
+    "main.js": "/threebodysimulation/static/js/main.2ff70250.js",
+    "static/js/453.fb85dd25.chunk.js": "/threebodysimulation/static/js/453.fb85dd25.chunk.js",
+    "index.html": "/threebodysimulation/index.html",
+    "main.bb64b08c.css.map": "/threebodysimulation/static/css/main.bb64b08c.css.map",
+    "main.2ff70250.js.map": "/threebodysimulation/static/js/main.2ff70250.js.map",
+    "453.fb85dd25.chunk.js.map": "/threebodysimulation/static/js/453.fb85dd25.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.bb64b08c.css",
+    "static/js/main.2ff70250.js"
+  ]
+}
