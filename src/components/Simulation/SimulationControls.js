@@ -3,29 +3,46 @@ import React, { useState, useRef, useEffect} from 'react';
 import { SketchPicker } from 'react-color';
 
 const SimulationControls = ({
-  isRunning,
-  setIsRunning,
-  handleRestart,
-  showGrid,
-  setShowGrid,
-  handleSpeedUp,
-  handleSlowDown,
-  timeScale,
+  bodiesRef,
   bodies,
   setBodies,
   setHoveredBody,
+
+  isRunning,
+  setIsRunning,
+  handleRestart,
+
+  handleSpeedUp,
+  handleSlowDown,
+
+  timeScale,
   setTime,
-  bodiesRef,
+  
   showVelocityArrows,
   setShowVelocityArrows,
   showAccelerationArrows,
-  setShowAccelerationArrows
+  setShowAccelerationArrows,
+
+  showGrid,
+  setShowGrid,
+  gridSize,
+  setGridSize, 
+  gridSpacing,
+  setGridSpacing,
+
+  showNames,
+  setShowNames
 }) => {
 
   const [hoveredMass, setHoveredMass] = useState(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedMass, setSelectedMass] = useState(null);
   const colorPickerRef = useRef(null); // Reference to color picker element
+  const [editValue, setEditValue] = useState({ id: null, property: '', index: -1, value: '' });
+
+
+
+
 
  // Update the bodiesRef when bodies change
   useEffect(() => {
@@ -73,104 +90,47 @@ const SimulationControls = ({
   };
 
 
-  const handleChangeMass = (id, newMass) => {
-    setBodies(prevBodies => {
-      const newBodies = prevBodies.map(body => {
-        if (body.id === id) {
-          return { ...body, mass: parseFloat(newMass).toFixed(4) || body.mass.toFixed(4) }; // Parse float to handle empty string or invalid input
+  const commitEdit = () => {
+    if (editValue.id !== null && editValue.property !== null) {
+      setBodies(prevBodies => {
+        const newBodies = [...prevBodies];
+        const bodyIndex = newBodies.findIndex(body => body.id === editValue.id);
+        if (bodyIndex !== -1) {
+          const body = { ...newBodies[bodyIndex]};
+          let newValue = editValue.value.trim(); // Trim whitespace
+
+          
+          // Validate and parse as needed
+          if (editValue.property === 'velocity' || editValue.property === 'position') {
+            // Parse float for numerical fields
+            newValue = parseFloat(newValue);
+            if (isNaN(newValue)) {
+              newValue = 0; // Replace with 0 if NaN or empty
+            }
+          } else {
+            // For non-numerical fields like mass or radius, handle differently if needed
+            newValue = newValue || '0'; // Replace empty with '0'
+          }
+          // Update body based on the property and index
+          if (editValue.property === 'mass') {
+            body.mass = parseFloat(newValue)|| body.mass;
+          } else if (editValue.property === 'radius') {
+            body.radius = parseFloat(newValue) || body.radius;
+          } else if (editValue.property === 'velocity') {
+            body.velocity[editValue.index] = newValue;
+          } else if (editValue.property === 'position') {
+            body.position[editValue.index] = newValue;
+          } else if (editValue.property === 'name') {
+            body.name = newValue;
+          }
+          newBodies[bodyIndex] = body;
         }
-        return body;
+        return newBodies;
       });
-      return newBodies;
-    });
+      // Clear edit state after commit
+      setEditValue({ id: null, property: null, index: null, value: '' });
+    }
   };
-
-  const handleChangeRadius = (id, newRadius) => {
-    setBodies(prevBodies => {
-      const newBodies = prevBodies.map(body => {
-        if (body.id === id) {
-          return { ...body, radius: parseFloat(newRadius).toFixed(4) || body.radius.toFixed(4) };
-        }
-        return body;
-      });
-      return newBodies;
-    });
-  };
-
-  const handleChangePositionX = (id, newX) => { 
-    setBodies(prevBodies => {
-      const newBodies = prevBodies.map(body => {
-        if (body.id === id) {
-          return { ...body, position: [parseFloat(newX) || body.position[0], body.position[1], body.position[2]] };
-        }
-        return body;
-      });
-      return newBodies;
-    });
-  };
-
-  const handleChangePositionY = (id, newY) => {
-    setBodies(prevBodies => {
-      const newBodies = prevBodies.map(body => {
-        if (body.id === id) {
-          return { ...body, position: [body.position[0], parseFloat(newY) || body.position[1], body.position[2]] };
-        }
-        return body;
-      });
-      return newBodies;
-    });
-  };
-
-  const handleChangePositionZ = (id, newZ) => {
-    setBodies(prevBodies => {
-      const newBodies = prevBodies.map(body => {
-        if (body.id === id) {
-          return { ...body, position: [body.position[0], body.position[1], parseFloat(newZ) || body.position[2]] };
-        }
-        return body;
-      });
-      return newBodies;
-    });
-  };
-
-
-  const handleChangeVelocityX = (id, newVX) => {
-    setBodies(prevBodies => {
-      const newBodies = prevBodies.map(body => {
-        if (body.id === id) {
-          return { ...body, velocity: [parseFloat(newVX) || body.velocity[0], body.velocity[1], body.velocity[2]] };
-        }
-        return body;
-      });
-      return newBodies;
-    });
-  };
-
-  const handleChangeVelocityY = (id, newVY) => {
-    setBodies(prevBodies => {
-      const newBodies = prevBodies.map(body => {
-        if (body.id === id) {
-          return { ...body, velocity: [body.velocity[0], parseFloat(newVY) || body.velocity[1], body.velocity[2]] };
-        }
-        return body;
-      });
-      return newBodies;
-    });
-  };
-
-  const handleChangeVelocityZ = (id, newVZ) => {
-    setBodies(prevBodies => {
-      const newBodies = prevBodies.map(body => {
-        if (body.id === id) {
-          return { ...body, velocity: [body.velocity[0], body.velocity[1], parseFloat(newVZ) || body.velocity[2]] };
-        }
-        return body;
-      });
-      return newBodies;
-    });
-  };
-
-
   const handleAddMass = () => {
     console.log(bodies)
     console.log(bodies.length)
@@ -181,7 +141,8 @@ const SimulationControls = ({
       velocity: [0, 0, 0],
       mass: 10,
       radius: 0.2, 
-      color: '#7FFFF4' 
+      color: '#7FFFF4',
+      name: 'Mass ' + newId
     };
     setBodies(prevBodies => [...prevBodies, newMass]);
   };
@@ -222,6 +183,22 @@ const SimulationControls = ({
         </button>
       </div>
       <div>
+        <span>Grid Size:</span>
+        <input
+          type="number"
+          value={gridSize}
+          onChange={e => setGridSize(parseFloat(e.target.value))}
+          style={{ marginLeft: '5px', width: '50px', textAlign: 'left' }}
+        />
+        <span>Grid Spacing:</span>
+        <input
+          type="number"
+          value={gridSpacing}
+          onChange={e => setGridSpacing(parseFloat(e.target.value))}
+          style={{ marginLeft: '5px', width: '50px', textAlign: 'left' }}
+        />
+      </div>
+      <div>
         <span>Speed:</span>
         <button onClick={handleSlowDown}>&lt;</button>
         <input
@@ -239,17 +216,23 @@ const SimulationControls = ({
             checked={showVelocityArrows}
             onChange={(e) => setShowVelocityArrows(e.target.checked)}
           />
-          Show Velocity Arrows
+          Show Velocity
         </label>
-      </div>
-      <div>
         <label>
           <input
             type="checkbox"
             checked={showAccelerationArrows}
             onChange={(e) => setShowAccelerationArrows(e.target.checked)}
           />
-          Show Acceleration Arrows
+          Show Acceleration
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showNames}
+            onChange={(e) => setShowNames(e.target.checked)}
+          />
+          Show Names
         </label>
       </div>
       
@@ -280,11 +263,24 @@ const SimulationControls = ({
               }}
             >
               <div>
+                <label>Name:</label>
+                <input
+                  type="text"
+                  value={editValue.id === body.id && editValue.property === 'name' ? editValue.value : body.name}
+                  onChange={e => setEditValue({ id: body.id, property: 'name', index: 0, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
+                  style={{ marginLeft: '5px', width: '60px' }}
+                />
+              </div>
+              <div>
                 <label>Mass:</label>
                 <input
                   type="text"
-                  value={parseFloat(body.mass).toFixed(4)}
-                  onChange={e => handleChangeMass(body.id, e.target.value)}
+                  value={editValue.id === body.id && editValue.property === 'mass' ? editValue.value : body.mass}
+                  onChange={e => setEditValue({ id: body.id, property: 'mass', index: 0, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
               </div>
@@ -292,8 +288,10 @@ const SimulationControls = ({
                 <label>Radius:</label>
                 <input
                   type="text"
-                  value={parseFloat(body.radius).toFixed(4)}
-                  onChange={e => handleChangeRadius(body.id, e.target.value)}
+                  value={editValue.id === body.id && editValue.property === 'radius' ? editValue.value : body.radius}
+                  onChange={e => setEditValue({ id: body.id, property: 'radius', index: 0, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
               </div>
@@ -301,22 +299,28 @@ const SimulationControls = ({
                 <label>Position X:</label>
                 <input
                   type="text"
-                  value={parseFloat(body.position[0]).toFixed(4)}
-                  onChange={e => handleChangePositionX(body.id, e.target.value)}
+                  value={editValue.id === body.id && editValue.property === 'position' && editValue.index === 0 ? editValue.value : body.position[0]}
+                  onChange={e => setEditValue({ id: body.id, property: 'position', index: 0, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
                 <label>Y:</label>
                 <input
                   type="text"
-                  value={parseFloat(body.position[1]).toFixed(4)}
-                  onChange={e => handleChangePositionY(body.id, e.target.value)}
+                  value={editValue.id === body.id && editValue.property === 'position' && editValue.index === 1 ? editValue.value : body.position[1]}
+                  onChange={e => setEditValue({ id: body.id, property: 'position', index: 1, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
                 <label>Z:</label>
                 <input
                   type="text"
-                  value={parseFloat(body.position[2]).toFixed(4)}
-                  onChange={e => handleChangePositionZ(body.id, e.target.value)}
+                  value={editValue.id === body.id && editValue.property === 'position' && editValue.index === 2 ? editValue.value : body.position[2]}
+                  onChange={e => setEditValue({ id: body.id, property: 'position', index: 2, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
               </div>
@@ -324,22 +328,28 @@ const SimulationControls = ({
                 <label>Velocity X:</label>
                 <input
                   type="text"
-                  value={parseFloat(body.velocity[0]).toFixed(4)}
-                  onChange={e => handleChangeVelocityX(body.id, e.target.value)}
+                  value={editValue.id === body.id && editValue.property === 'velocity' && editValue.index === 0 ? editValue.value : body.velocity[0]}
+                  onChange={e => setEditValue({ id: body.id, property: 'velocity', index: 0, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
                 <label>Y:</label>
                 <input
                   type="text"
-                  value={parseFloat(body.velocity[1]).toFixed(4)}
-                  onChange={e => handleChangeVelocityY(body.id, e.target.value)}
+                  value={editValue.id === body.id && editValue.property === 'velocity' && editValue.index === 1 ? editValue.value : body.velocity[1]}
+                  onChange={e => setEditValue({ id: body.id, property: 'velocity', index: 1, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
                 <label>Z:</label>
                 <input
                   type="text"
-                  value={parseFloat(body.velocity[2]).toFixed(4)}
-                  onChange={e => handleChangeVelocityZ(body.id, e.target.value)}
+                  value={editValue.id === body.id && editValue.property === 'velocity' && editValue.index === 2 ? editValue.value : body.velocity[2]}
+                  onChange={e => setEditValue({ id: body.id, property: 'velocity', index: 2, value: e.target.value })}
+                  onBlur={commitEdit} // Commit edit on blur
+                  onKeyUp={e => e.key === 'Enter' && commitEdit()} // Commit edit on Enter key
                   style={{ marginLeft: '5px', width: '60px' }}
                 />
               </div>

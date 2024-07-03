@@ -36,12 +36,12 @@ const createGrid = (size, divisions, showGrid) => {
   return geometry;
 };
 
-const Grid = ({ size = 50, divisions = 50, color = 'gray', showGrid }) => {
+const Grid = ({ gridSize = 50, gridSpacing  = 50, color = 'gray', showGrid }) => {
   const { scene } = useThree();
   const gridRef = useRef();
 
   useEffect(() => {
-    const geometry = createGrid(size, divisions, showGrid);
+    const geometry = createGrid(gridSize, gridSpacing , showGrid);
     const material = new THREE.LineBasicMaterial({ color });
 
     const grid = new LineSegments(geometry, material);
@@ -53,7 +53,7 @@ const Grid = ({ size = 50, divisions = 50, color = 'gray', showGrid }) => {
       geometry.dispose();
       material.dispose();
     };
-  }, [scene, size, divisions, color, showGrid]);
+  }, [scene, gridSize, gridSpacing , color, showGrid]);
 
   return null;
 };

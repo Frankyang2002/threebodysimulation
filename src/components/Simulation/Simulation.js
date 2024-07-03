@@ -11,9 +11,9 @@ import useMouseInteractions from './useMouseInteractions';
 import { computeAcceleration } from '../../utils/physics';
 // Default bodies
 const initialBodies = [
-  { id: 1, position: [3, 3, 0], velocity: [0, 0, 0], mass: 40, radius: 0.2, color: '#0000FF'},
-  { id: 2, position: [-3, 3, 0], velocity: [0, 0, 0], mass: 80, radius: 0.2, color: '#00FF00'},
-  { id: 3, position: [0, -3, 0], velocity: [0, 0, 0], mass: 40, radius: 0.2, color: '#FF0000'},
+  { id: 1, position: [3, 3, 0], velocity: [0, 0, 0], mass: 40, radius: 0.2, color: '#0000FF', name: 'Mass 1'},
+  { id: 2, position: [-3, 3, 0], velocity: [0, 0, 0], mass: 40, radius: 0.2, color: '#00FF00', name: 'Mass 2'},
+  { id: 3, position: [0, -3, 0], velocity: [0, 0, 0], mass: 40, radius: 0.2, color: '#FF0000', name: 'Mass 3'},
 ];
 
 const Simulation = () => {
@@ -27,6 +27,9 @@ const Simulation = () => {
   const cameraRef = useRef();
   const [showVelocityArrows, setShowVelocityArrows] = useState(true);
   const [showAccelerationArrows, setShowAccelerationArrows] = useState(true);
+  const [gridSize, setGridSize] = useState(50);
+  const [gridSpacing, setGridSpacing] = useState(50);
+  const [showNames, setShowNames] = useState(true);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useMouseInteractions(
     bodiesRefs,
@@ -69,6 +72,8 @@ const Simulation = () => {
     });
   }, [setBodies]);
 
+
+  
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
       <div
@@ -81,7 +86,7 @@ const Simulation = () => {
           camera={{ position: [0, 0, 10], near: 0.1, far: 1000 }}
           onCreated={({ camera }) => (cameraRef.current = camera)}
         >
-          {showGrid && <Grid showGrid={showGrid} />}
+          {showGrid && <Grid showGrid={showGrid} gridSize={gridSize} gridSpacing={gridSpacing}/>}
           {bodies.map(body => (
             <Body
               key={body.id}
@@ -89,6 +94,7 @@ const Simulation = () => {
               isSelected={body.id === selectedBody}
               isHovered={body.id === hoveredBody} // Pass hovered state
               ref={bodiesRefs.current.get(body.id)}
+              showName = {showNames}
             />
           ))}
           {bodies.map(body => (
@@ -126,7 +132,7 @@ const Simulation = () => {
             enableZoom={true}
             enablePan={true}
             enableRotate={true}
-            zoomSpeed={1}
+            zoomSpeed={2}
             target={[0, 0, 0]}
             enabled={selectedBody === null}
           />
@@ -154,7 +160,14 @@ const Simulation = () => {
         setShowVelocityArrows={setShowVelocityArrows}
         showAccelerationArrows={showAccelerationArrows}
         setShowAccelerationArrows={setShowAccelerationArrows}
+        gridSize={gridSize}
+        setGridSize={setGridSize}
+        gridSpacing={gridSpacing}
+        setGridSpacing={setGridSpacing}
+        showNames = {showNames} 
+        setShowNames = {setShowNames}
       />
+
     </div>
   );
 };

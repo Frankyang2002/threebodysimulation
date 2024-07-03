@@ -3,7 +3,7 @@
 export function computeAcceleration(body, bodies) {
   //const G = 6.67430e-11; // Gravitational constant
   const G = 1;
-  const softening = 0.1; // Softening factor to prevent singularities and division by zero
+  const softening = 0.01; // Softening factor to prevent singularities and division by zero
 
   let ax = 0;
   let ay = 0;
